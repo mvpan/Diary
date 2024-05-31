@@ -5,25 +5,23 @@ import MenuList from "./components/MenuList/MenuList";
 import Body from "./layouts/Body/Body";
 import LeftPanel from "./layouts/LeftPanel/LeftPanel";
 import MenuForm from "./components/MenuForm/MenuForm";
-import { useState } from "react";
-
-const DATA = [
-  {
-    id: 1,
-    title: "Привет",
-    text: "Пока",
-    date: new Date()
-  },
-  {
-    id: 2,
-    title: "Привет",
-    text: "Пока",
-    date: new Date()
-  }
-];
+import { useEffect, useState } from "react";
 
 function App() {
-  const [data, setData] = useState(DATA);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const aa = JSON.parse(localStorage.getItem("data"));
+    if (aa) {
+      setData(aa.map((item) => ({ ...item, date: new Date(item.date) })));
+    }
+  }, []);
+  useEffect(() => {
+    if (data.length) {
+      console.log("Hi");
+      localStorage.setItem("data", JSON.stringify(data));
+    }
+  }, [data]);
   const addItem = (item) => {
     setData((oldItem) => [
       ...oldItem,
