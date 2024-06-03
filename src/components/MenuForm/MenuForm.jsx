@@ -1,56 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import Button from "../Button/Button";
 import styles from "./MenuForm.module.css";
 import clas from "classnames";
-
-const INITIAL_STATE = {
-  title: true,
-  post: true,
-  date: true
-};
+import { INITIAL_STATE, formReducer } from "./MenuForm.state";
 
 const MenuForm = ({ onSubmit }) => {
-  const [formValid, setFormValid] = useState(INITIAL_STATE);
+  const [formValid, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+  const { isValid, isFormReadyToSubmit, values } = formValid;
+  const titleRef = useRef();
+  const dateRef = useRef();
+  const postRef = useRef();
+
+  const focusError = () => {
+    switch (true) {
+      case !isValid.title:
+        titleRef.current.focus();
+        break;
+      case !isValid.date:
+        dateRef.current.focus();
+        break;
+      case !isValid.post:
+        postRef.current.focus();
+        break;
+    }
+  };
 
   useEffect(() => {
     let timer;
-    if (!formValid.title || !formValid.date || !formValid.post) {
+    if (!isValid.title || !isValid.date || !isValid.post) {
+      focusError(isValid);
       timer = setTimeout(() => {
-        setFormValid(INITIAL_STATE);
+        dispatchForm({ type: "RESET_VALID" });
       }, 2000);
     }
     return () => {
       clearTimeout(timer);
     };
-  }, [formValid]);
-
+  }, [isValid]);
+  useEffect(() => {
+    if (isFormReadyToSubmit) {
+      onSubmit(values);
+      dispatchForm({ type: "CLEAR" });
+    }
+  }, [isFormReadyToSubmit, onSubmit, values]);
+  const onChange = (e) => {
+    console.log({ [e.target.name]: e.target.value });
+    dispatchForm({
+      type: "SET_VALUE",
+      payload: { [e.target.name]: e.target.value }
+    });
+  };
   const addMenuItem = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const formProps = Object.fromEntries(formData);
-    let isFormValid = true;
-    if (!formProps.title.trim().length) {
-      setFormValid((state) => ({ ...state, title: false }));
-      isFormValid = false;
-    } else {
-      setFormValid((state) => ({ ...state, title: true }));
-    }
-    if (!formProps.post.trim().length) {
-      setFormValid((state) => ({ ...state, post: false }));
-      isFormValid = false;
-    } else {
-      setFormValid((state) => ({ ...state, post: true }));
-    }
-    if (!formProps.date) {
-      setFormValid((state) => ({ ...state, date: false }));
-      isFormValid = false;
-    } else {
-      setFormValid((state) => ({ ...state, date: true }));
-    }
-    if (!isFormValid) {
-      return;
-    }
-    onSubmit(formProps);
+    dispatchForm({ type: "SUBMIT" });
   };
 
   return (
@@ -59,8 +61,11 @@ const MenuForm = ({ onSubmit }) => {
         <input
           type="title"
           name="title"
+          value={values.title}
+          onChange={onChange}
+          ref={titleRef}
           className={clas(styles["input-title"], {
-            [styles["invalid"]]: !formValid.date
+            [styles["invalid"]]: !isValid.title
           })}
         />
       </div>
@@ -72,8 +77,11 @@ const MenuForm = ({ onSubmit }) => {
         <input
           type="date"
           name="date"
+          ref={dateRef}
+          value={values.date}
+          onChange={onChange}
           className={`${styles["input"]} ${
-            formValid.date ? "" : styles["invalid"]
+            isValid.date ? "" : styles["invalid"]
           }`}
         />
       </div>
@@ -82,15 +90,24 @@ const MenuForm = ({ onSubmit }) => {
           <img src="/folder.svg" alt="Папка" />
           <span>Тег</span>
         </label>
-        <input type="text" name="tag" className={styles["input"]} />
+        <input
+          type="text"
+          name="tag"
+          value={values.tag}
+          onChange={onChange}
+          className={styles["input"]}
+        />
       </div>
       <textarea
         name="post"
         id=""
         cols="30"
         rows="10"
+        value={values.post}
+        ref={postRef}
+        onChange={onChange}
         className={`${styles["input"]} ${
-          formValid.post ? "" : styles["invalid"]
+          isValid.post ? "" : styles["invalid"]
         }`}
       ></textarea>
       <Button text="Сохранить" />

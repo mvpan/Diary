@@ -18,7 +18,6 @@ function App() {
   }, []);
   useEffect(() => {
     if (data.length) {
-      console.log("Hi");
       localStorage.setItem("data", JSON.stringify(data));
     }
   }, [data]);
