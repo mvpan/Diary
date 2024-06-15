@@ -1,9 +1,12 @@
+import Logo from "../Logo/Logo";
+import SelectUser from "../SelectUser/SelectUser";
 import "./Header.css";
-
+const logos = ["/logo.svg"];
 const Header = () => {
   return (
     <>
-      <img className="logo" src="/logo.svg" alt="Логотип" />
+      <Logo image={logos[0]}></Logo>
+      <SelectUser></SelectUser>
     </>
   );
 };

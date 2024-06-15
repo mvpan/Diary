@@ -1,15 +1,17 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useContext, useEffect, useReducer, useRef } from "react";
 import Button from "../Button/Button";
 import styles from "./MenuForm.module.css";
-import clas from "classnames";
 import { INITIAL_STATE, formReducer } from "./MenuForm.state";
+import Input from "../Input/Input";
+import { UserContext } from "../../context/user.context";
 
-const MenuForm = ({ onSubmit }) => {
+const MenuForm = ({ onSubmit, data, onDelete }) => {
   const [formValid, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
   const { isValid, isFormReadyToSubmit, values } = formValid;
   const titleRef = useRef();
   const dateRef = useRef();
   const postRef = useRef();
+  const { userId } = useContext(UserContext);
 
   const focusError = () => {
     switch (true) {
@@ -24,7 +26,16 @@ const MenuForm = ({ onSubmit }) => {
         break;
     }
   };
-
+  useEffect(() => {
+    if (!data) {
+      dispatchForm({ type: "CLEAR" });
+      dispatchForm({ type: "SET_VALUE", payload: { userId } });
+    }
+    dispatchForm({
+      type: "SET_VALUE",
+      payload: { ...data }
+    });
+  }, [data, userId]);
   useEffect(() => {
     let timer;
     if (!isValid.title || !isValid.date || !isValid.post) {
@@ -41,10 +52,20 @@ const MenuForm = ({ onSubmit }) => {
     if (isFormReadyToSubmit) {
       onSubmit(values);
       dispatchForm({ type: "CLEAR" });
+      dispatchForm({
+        type: "SET_VALUE",
+        payload: { userId }
+      });
     }
-  }, [isFormReadyToSubmit, onSubmit, values]);
+  }, [isFormReadyToSubmit, onSubmit, userId, values]);
+
+  useEffect(() => {
+    dispatchForm({
+      type: "SET_VALUE",
+      payload: { userId }
+    });
+  }, [userId]);
   const onChange = (e) => {
-    console.log({ [e.target.name]: e.target.value });
     dispatchForm({
       type: "SET_VALUE",
       payload: { [e.target.name]: e.target.value }
@@ -54,35 +75,51 @@ const MenuForm = ({ onSubmit }) => {
     e.preventDefault();
     dispatchForm({ type: "SUBMIT" });
   };
+  const deleteItem = () => {
+    onDelete(data.id);
+    dispatchForm({ type: "CLEAR" });
+    dispatchForm({
+      type: "SET_VALUE",
+      payload: { userId }
+    });
+  };
 
   return (
     <form className={styles["menu-form"]} onSubmit={addMenuItem}>
-      <div>
-        <input
+      <div className={styles["form__row"]}>
+        <Input
           type="title"
           name="title"
           value={values.title}
           onChange={onChange}
           ref={titleRef}
-          className={clas(styles["input-title"], {
-            [styles["invalid"]]: !isValid.title
-          })}
+          isValid={isValid.title}
+          appearence={"title"}
         />
+        {data?.id && (
+          <button
+            className={styles["delete"]}
+            type="button"
+            onClick={deleteItem}
+          >
+            <img src="/delete.svg" alt="Кнопка удалить" />
+          </button>
+        )}
       </div>
       <div className={styles["form__row"]}>
         <label htmlFor="date" className={styles["form__label"]}>
           <img src="/calendar.svg" alt="Календарь" />
           <span>Дата</span>
         </label>
-        <input
+        <Input
           type="date"
           name="date"
           ref={dateRef}
-          value={values.date}
+          value={
+            values.date ? new Date(values.date).toISOString().slice(0, 10) : ""
+          }
           onChange={onChange}
-          className={`${styles["input"]} ${
-            isValid.date ? "" : styles["invalid"]
-          }`}
+          isValid={isValid.date}
         />
       </div>
       <div className={styles["form__row"]}>
@@ -90,12 +127,12 @@ const MenuForm = ({ onSubmit }) => {
           <img src="/folder.svg" alt="Папка" />
           <span>Тег</span>
         </label>
-        <input
+        <Input
           type="text"
           name="tag"
           value={values.tag}
           onChange={onChange}
-          className={styles["input"]}
+          isValid={isValid}
         />
       </div>
       <textarea
@@ -110,7 +147,7 @@ const MenuForm = ({ onSubmit }) => {
           isValid.post ? "" : styles["invalid"]
         }`}
       ></textarea>
-      <Button text="Сохранить" />
+      <Button>Сохранить</Button>
     </form>
   );
 };

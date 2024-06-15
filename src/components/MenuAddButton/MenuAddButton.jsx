@@ -1,10 +1,10 @@
 import CardButton from "../CardButton/CardButton";
 import "./MenuAddButton.css";
 
-const MenuAddButton = () => {
+const MenuAddButton = ({ clearForm }) => {
   return (
     <>
-      <CardButton className="menu-add">
+      <CardButton className="menu-add" onClick={clearForm}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
